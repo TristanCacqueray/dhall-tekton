@@ -22,6 +22,8 @@ tekton_pipeline_git = Path(sys.argv[1])
 tekton_ns = 'com.github.tektoncd.pipeline'
 tekton_type_files = (
     "apis/resource/v1alpha1/pipeline_resource_types.go",
+    "apis/pipeline/v1alpha1/task_types.go",
+    "apis/pipeline/v1alpha2/workspace_types.go",
 )
 
 def read_type(type_path):
@@ -57,6 +59,9 @@ def show_type(type):
             type_def.append(('kind', 'Text'))
         elif typedef.startswith('metav1.ObjectMeta'):
             type_def.append(('metadata', './io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta.dhall'))
+        elif 'inline' in typedef:
+            # skip for now
+            continue
         else:
             name, tdef, json_def = typedef.split()
             name = name[0].lower() + name[1:]
@@ -68,9 +73,8 @@ def show_type(type):
             else:
                 tval = ''
 
-            # Skip for now
             if tdef[0] == '*':
-                continue
+                tdef = tdef[1:]
 
             if tdef == 'string':
                 tval += 'Text'
@@ -119,7 +123,11 @@ for tekton_type in tekton_type_files:
     for t in read_type(tekton_type).values():
         if t['name'].endswith('List'):
             continue
-        type_def = show_type(t)
+        try:
+            type_def = show_type(t)
+        except:
+            print("Couldn't show", t)
+            raise
         write_type(t, type_def)
 
 schemas = []
