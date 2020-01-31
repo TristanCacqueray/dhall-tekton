@@ -20,11 +20,11 @@ from pathlib import Path
 
 tekton_pipeline_git = Path(sys.argv[1])
 tekton_ns = 'com.github.tektoncd.pipeline'
-tekton_type_files = (
-    "apis/resource/v1alpha1/pipeline_resource_types.go",
-    "apis/pipeline/v1alpha1/task_types.go",
-    "apis/pipeline/v1alpha2/workspace_types.go",
-)
+tekton_type_files = [
+#    "apis/resource/v1alpha1/pipeline_resource_types.go",
+#    "apis/pipeline/v1alpha1/task_types.go",
+#    "apis/pipeline/v1alpha2/workspace_types.go",
+]
 
 def read_type(type_path):
     """A quick golang type definition parser"""
