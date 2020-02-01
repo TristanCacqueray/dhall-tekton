@@ -1,0 +1,20 @@
+{ script = None Text
+, args = [] : List Text
+, command = [] : List Text
+, env = [] : List (./../Kubernetes.dhall).EnvVar.Type
+, envFrom = [] : List (./../Kubernetes.dhall).EnvFromSource.Type
+, ports = [] : List (./../Kubernetes.dhall).ContainerPort.Type
+, volumeDevices = [] : List (./../Kubernetes.dhall).VolumeDevice.Type
+, volumeMounts = [] : List (./../Kubernetes.dhall).VolumeMount.Type
+, image = None Text
+, imagePullPolicy = None Text
+, lifecycle = None (./../Kubernetes.dhall).Lifecycle.Type
+, resources = None (./../Kubernetes.dhall).ResourceRequirements.Type
+, securityContext = None (./../Kubernetes.dhall).SecurityContext.Type
+, stdin = None Bool
+, stdinOnce = None Bool
+, terminationMessagePath = None Text
+, terminationMessagePolicy = None Text
+, tty = None Bool
+, workingDir = None Text
+}

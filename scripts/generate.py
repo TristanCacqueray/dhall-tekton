@@ -21,9 +21,10 @@ from pathlib import Path
 tekton_pipeline_git = Path(sys.argv[1])
 tekton_ns = 'com.github.tektoncd.pipeline'
 tekton_type_files = [
-    "apis/resource/v1alpha1/pipeline_resource_types.go",
-#    "apis/pipeline/v1alpha1/task_types.go",
-#    "apis/pipeline/v1alpha2/workspace_types.go",
+#    "apis/resource/v1alpha1/pipeline_resource_types.go",
+    "apis/pipeline/v1alpha2/task_types.go", # To import TaskResult
+    "apis/pipeline/v1alpha1/task_types.go",
+    "apis/pipeline/v1alpha2/workspace_types.go",
 ]
 
 
@@ -47,7 +48,7 @@ def read_type(type_path):
     return types
 
 
-def show_type_file(type_name):
+def show_type_file(type_name: str) -> str:
     return tekton_ns + '.v1.' + type_name + '.dhall'
 
 
@@ -58,13 +59,23 @@ def show_type(type, all_types):
         if typedef.startswith('metav1.TypeMeta '):
             type_def.append(('apiVersion', 'Text')),
             type_def.append(('kind', 'Text'))
+        elif typedef.startswith('Kind '):
+            type_def.append(('kind', 'Text'))
         elif typedef.startswith('metav1.ObjectMeta'):
-            type_def.append(('metadata', './io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta.dhall'))
+            type_def.append(('metadata', '(../Kubernetes.dhall).ObjectMeta.Type'))
+        elif typedef.startswith('corev1.Container'):
+            continue
         elif 'inline' in typedef:
             # skip for now
             continue
         else:
-            name, tdef, json_def = typedef.split()
+            try:
+                typedef = typedef.split()
+                name, tdef = typedef[0], typedef[1]
+            except:
+                print("Decode error", typedef)
+                raise
+            json_def = typedef[-1]
             name = name[0].lower() + name[1:]
 
             # First look for list
@@ -83,6 +94,8 @@ def show_type(type, all_types):
                 tval += 'Bool'
             elif tdef == 'PipelineResourceType':
                 tval += 'Text'
+            elif tdef.startswith('corev1'):
+                tval += '(../Kubernetes.dhall).%s.Type' % tdef.split('.')[1]
             else:
                 if all_types.get(tdef) and all_types[tdef]["typedef"] == []:
                     # Skip empty type such as Status
@@ -108,7 +121,7 @@ def write_type(type, type_def):
     default_file = Path('defaults') / show_type_file(type['name'])
     defaults = []
     for n, v in type_def:
-        v = v.replace('./', './../types/')
+        v = v.replace('./', './../types/').replace('../../types/Kubernetes', './../Kubernetes')
         if v.startswith('Optional'):
             defaults.append((n, 'None ' + v[len('Optional'):]))
         elif v.startswith('List'):
@@ -141,6 +154,35 @@ for tekton_type_file in tekton_type_files:
         if not type_def:
             continue
         write_type(tekton_type, type_def)
+
+
+write_type(dict(name="Step"), [("script", "Optional Text"),
+  # Converted from kubernetes container type definition
+  #  \([a-zA-Z]+\) : \(.*\)  -> ("\1", "\2")
+  #  ..io.k8s.api.core.v1.\([a-zA-Z]+\).dhall -> (../Kubernetes.dhall).\1.Type
+  ("args", "List Text")
+, ("command", "List Text")
+, ("env", "List (../Kubernetes.dhall).EnvVar.Type")
+, ("envFrom", "List (../Kubernetes.dhall).EnvFromSource.Type")
+, ("livenessProbe", "(../Kubernetes.dhall).Probe.Type")
+, ("name", "Text")
+, ("ports", "List (../Kubernetes.dhall).ContainerPort.Type")
+, ("readinessProbe", "(../Kubernetes.dhall).Probe.Type")
+, ("startupProbe", "(../Kubernetes.dhall).Probe.Type")
+, ("volumeDevices", "List (../Kubernetes.dhall).VolumeDevice.Type")
+, ("volumeMounts", "List (../Kubernetes.dhall).VolumeMount.Type")
+, ("image", "Optional Text")
+, ("imagePullPolicy", "Optional Text")
+, ("lifecycle", "Optional (../Kubernetes.dhall).Lifecycle.Type")
+, ("resources", "Optional (../Kubernetes.dhall).ResourceRequirements.Type")
+, ("securityContext", "Optional (../Kubernetes.dhall).SecurityContext.Type")
+, ("stdin", "Optional Bool")
+, ("stdinOnce", "Optional Bool")
+, ("terminationMessagePath", "Optional Text")
+, ("terminationMessagePolicy", "Optional Text")
+, ("tty", "Optional Bool")
+, ("workingDir", "Optional Text")])
+
 
 schemas = []
 for schema in os.listdir('schemas'):

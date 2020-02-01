@@ -1,13 +1,8 @@
 { name : Text
 , subPath : Optional Text
 , persistentVolumeClaim :
-    Optional
-      ./com.github.tektoncd.pipeline.v1.corev1.PersistentVolumeClaimVolumeSource.dhall
-, emptyDir :
-    Optional ./com.github.tektoncd.pipeline.v1.corev1.EmptyDirVolumeSource.dhall
-, configMap :
-    Optional
-      ./com.github.tektoncd.pipeline.v1.corev1.ConfigMapVolumeSource.dhall
-, secret :
-    Optional ./com.github.tektoncd.pipeline.v1.corev1.SecretVolumeSource.dhall
+    Optional (../Kubernetes.dhall).PersistentVolumeClaimVolumeSource.Type
+, emptyDir : Optional (../Kubernetes.dhall).EmptyDirVolumeSource.Type
+, configMap : Optional (../Kubernetes.dhall).ConfigMapVolumeSource.Type
+, secret : Optional (../Kubernetes.dhall).SecretVolumeSource.Type
 }

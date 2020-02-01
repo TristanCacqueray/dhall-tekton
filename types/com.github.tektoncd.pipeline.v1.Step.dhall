@@ -1,1 +1,24 @@
-https://raw.githubusercontent.com/dhall-lang/dhall-kubernetes/master/1.17/types/io.k8s.api.core.v1.Container.dhall sha256:aa97ba56ced2fa840bc4ea203b1cfb1a58bc31a875905278ed7340a88200baa9
+{ script : Optional Text
+, args : List Text
+, command : List Text
+, env : List (../Kubernetes.dhall).EnvVar.Type
+, envFrom : List (../Kubernetes.dhall).EnvFromSource.Type
+, livenessProbe : (../Kubernetes.dhall).Probe.Type
+, name : Text
+, ports : List (../Kubernetes.dhall).ContainerPort.Type
+, readinessProbe : (../Kubernetes.dhall).Probe.Type
+, startupProbe : (../Kubernetes.dhall).Probe.Type
+, volumeDevices : List (../Kubernetes.dhall).VolumeDevice.Type
+, volumeMounts : List (../Kubernetes.dhall).VolumeMount.Type
+, image : Optional Text
+, imagePullPolicy : Optional Text
+, lifecycle : Optional (../Kubernetes.dhall).Lifecycle.Type
+, resources : Optional (../Kubernetes.dhall).ResourceRequirements.Type
+, securityContext : Optional (../Kubernetes.dhall).SecurityContext.Type
+, stdin : Optional Bool
+, stdinOnce : Optional Bool
+, terminationMessagePath : Optional Text
+, terminationMessagePolicy : Optional Text
+, tty : Optional Bool
+, workingDir : Optional Text
+}

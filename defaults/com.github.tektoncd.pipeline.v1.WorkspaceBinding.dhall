@@ -1,14 +1,7 @@
 { subPath = None Text
 , persistentVolumeClaim =
-    None
-      ./../types/com.github.tektoncd.pipeline.v1.corev1.PersistentVolumeClaimVolumeSource.dhall
-, emptyDir =
-    None
-      ./../types/com.github.tektoncd.pipeline.v1.corev1.EmptyDirVolumeSource.dhall
-, configMap =
-    None
-      ./../types/com.github.tektoncd.pipeline.v1.corev1.ConfigMapVolumeSource.dhall
-, secret =
-    None
-      ./../types/com.github.tektoncd.pipeline.v1.corev1.SecretVolumeSource.dhall
+    None (./../Kubernetes.dhall).PersistentVolumeClaimVolumeSource.Type
+, emptyDir = None (./../Kubernetes.dhall).EmptyDirVolumeSource.Type
+, configMap = None (./../Kubernetes.dhall).ConfigMapVolumeSource.Type
+, secret = None (./../Kubernetes.dhall).SecretVolumeSource.Type
 }
