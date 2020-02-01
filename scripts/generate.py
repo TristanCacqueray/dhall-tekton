@@ -21,10 +21,11 @@ from pathlib import Path
 tekton_pipeline_git = Path(sys.argv[1])
 tekton_ns = 'com.github.tektoncd.pipeline'
 tekton_type_files = [
-#    "apis/resource/v1alpha1/pipeline_resource_types.go",
+    "apis/resource/v1alpha1/pipeline_resource_types.go",
 #    "apis/pipeline/v1alpha1/task_types.go",
 #    "apis/pipeline/v1alpha2/workspace_types.go",
 ]
+
 
 def read_type(type_path):
     """A quick golang type definition parser"""
@@ -38,10 +39,10 @@ def read_type(type_path):
             in_type = dict(name=l.split()[1], path=type_path, typedef=[])
             continue
         if l == '}' and in_type:
-            if in_type['typedef']:
-                types[in_type['name']] = in_type
+            types[in_type['name']] = in_type
             in_type = None
         if in_type:
+            # read_type simply extract the attributes go definition for each type struct
             in_type['typedef'].append(l.strip())
     return types
 
@@ -50,7 +51,7 @@ def show_type_file(type_name):
     return tekton_ns + '.v1.' + type_name + '.dhall'
 
 
-def show_type(type):
+def show_type(type, all_types):
     """A quick golang type def to dhall"""
     type_def = []
     for typedef in type['typedef']:
@@ -83,6 +84,10 @@ def show_type(type):
             elif tdef == 'PipelineResourceType':
                 tval += 'Text'
             else:
+                if all_types.get(tdef) and all_types[tdef]["typedef"] == []:
+                    # Skip empty type such as Status
+                    continue
+
                 tval += './' + show_type_file(tdef)
 
             if 'omitempty' in json_def:
@@ -116,19 +121,26 @@ def write_type(type, type_def):
     write_file(default_file, "{" + defaults_str + "}")
     schema_file = Path('schemas') / show_type_file(type['name'])
     write_file(schema_file, "{ Type = ./../%s , default = ./../%s }" % (str(type_file), str(default_file)))
+    print(f"Wrote {type_file}")
 
 
-
-for tekton_type in tekton_type_files:
-    for t in read_type(tekton_type).values():
-        if t['name'].endswith('List'):
+all_types = {}
+for tekton_type_file in tekton_type_files:
+    tekton_types = read_type(tekton_type_file)
+    all_types.update(tekton_types)
+    for tekton_type in tekton_types.values():
+        # Skip List type for now
+        if tekton_type['name'].endswith('List'):
             continue
         try:
-            type_def = show_type(t)
+            type_def = show_type(tekton_type, all_types)
         except:
-            print("Couldn't show", t)
+            print("Couldn't show", tekton_type)
             raise
-        write_type(t, type_def)
+        # Skip empty type def
+        if not type_def:
+            continue
+        write_type(tekton_type, type_def)
 
 schemas = []
 for schema in os.listdir('schemas'):
