@@ -1,6 +1,6 @@
 let Tekton =
         env:DHALL_TEKTON
-      ? https://raw.githubusercontent.com/TristanCacqueray/dhall-tekton/master/package.dhall sha256:6e1beb1306b092073106c992df768951b4bfd62fc1299af06d6220312f2eeafe
+      ? https://raw.githubusercontent.com/TristanCacqueray/dhall-tekton/master/package.dhall sha256:5336609bbfc55757317dffee46fb25fbbfe8fdac97591820bd0bd8886dee66c2
 
 let Kubernetes =
         env:DHALL_KUBERNETES
@@ -35,6 +35,13 @@ in  Tekton.Task::{
       }
     , spec = Tekton.TaskSpec::{
       , inputs = Some Tekton.Inputs::{
+        , resources = Some
+            [ Tekton.TaskResource::{ name = "plumbing-git", type = "git" }
+            , Tekton.TaskResource::{
+              , name = "tektoncd-pipeline-git"
+              , type = "git"
+              }
+            ]
         , params = Some
             [ Tekton.ParamSpec::{
               , name = "UPLOADER_HOST"
@@ -50,6 +57,9 @@ in  Tekton.Task::{
             , env = step-env
             , image = Some "quay.io/buildah/stable:v1.11.0"
             , workingDir = Some "\$(inputs.resources.plumbing-git.path)"
+            , securityContext = Some Kubernetes.SecurityContext::{
+              , privileged = Some True
+              }
             , script = Some
                 ''
                 #!/usr/bin/env bash
