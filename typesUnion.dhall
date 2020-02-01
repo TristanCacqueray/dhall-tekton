@@ -9,8 +9,6 @@
 | Outputs : ./types/com.github.tektoncd.pipeline.v1.Outputs.dhall
 | SecretParam : ./types/com.github.tektoncd.pipeline.v1.SecretParam.dhall
 | ParamSpec : ./types/com.github.tektoncd.pipeline.v1.ParamSpec.dhall
-| ResourceDeclaration :
-    ./types/com.github.tektoncd.pipeline.v1.ResourceDeclaration.dhall
 | Task : ./types/com.github.tektoncd.pipeline.v1.Task.dhall
 | PipelineResourceSpec :
     ./types/com.github.tektoncd.pipeline.v1.PipelineResourceSpec.dhall

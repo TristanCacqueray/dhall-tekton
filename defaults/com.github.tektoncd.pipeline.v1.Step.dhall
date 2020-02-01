@@ -3,7 +3,10 @@
 , command = [] : List Text
 , env = [] : List (./../Kubernetes.dhall).EnvVar.Type
 , envFrom = [] : List (./../Kubernetes.dhall).EnvFromSource.Type
+, livenessProbe = (./../Kubernetes.dhall).Probe.default
 , ports = [] : List (./../Kubernetes.dhall).ContainerPort.Type
+, readinessProbe = (./../Kubernetes.dhall).Probe.default
+, startupProbe = (./../Kubernetes.dhall).Probe.default
 , volumeDevices = [] : List (./../Kubernetes.dhall).VolumeDevice.Type
 , volumeMounts = [] : List (./../Kubernetes.dhall).VolumeMount.Type
 , image = None Text

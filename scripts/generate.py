@@ -21,12 +21,16 @@ from pathlib import Path
 tekton_pipeline_git = Path(sys.argv[1])
 tekton_ns = 'com.github.tektoncd.pipeline'
 tekton_type_files = [
-#    "apis/resource/v1alpha1/pipeline_resource_types.go",
+    "apis/resource/v1alpha1/pipeline_resource_types.go",
     "apis/pipeline/v1alpha2/task_types.go", # To import TaskResult
     "apis/pipeline/v1alpha1/task_types.go",
     "apis/pipeline/v1alpha2/workspace_types.go",
 ]
 
+ignored_types = ['TaskResource']
+renamed_types = dict(
+    ResourceDeclaration="TaskResource"
+)
 
 def read_type(type_path):
     """A quick golang type definition parser"""
@@ -38,6 +42,10 @@ def read_type(type_path):
                     type_file.read_text().split('\n')):
         if l.startswith('type '):
             in_type = dict(name=l.split()[1], path=type_path, typedef=[])
+            if in_type['name'] in ignored_types:
+                in_type = None
+            elif in_type['name'] == renamed_types:
+                in_type['name'] = renamed_types[in_type['name']]
             continue
         if l == '}' and in_type:
             types[in_type['name']] = in_type
@@ -55,6 +63,8 @@ def show_type_file(type_name: str) -> str:
 def show_type(type, all_types):
     """A quick golang type def to dhall"""
     type_def = []
+    if type['name'] == 'ResourceDeclaration':
+        type['name'] = 'TaskResource'
     for typedef in type['typedef']:
         if typedef.startswith('metav1.TypeMeta '):
             type_def.append(('apiVersion', 'Text')),
@@ -130,6 +140,8 @@ def write_type(type, type_def):
             defaults.append((n, '"tekton.dev/v1alpha1"'))
         elif n == 'kind':
             defaults.append((n, '"' + type['name'] + '"'))
+        elif n.endswith('Probe'):
+            defaults.append((n, '(./../Kubernetes.dhall).Probe.default'))
     defaults_str = " , ".join(map(lambda td: " = ".join(td), defaults)) if defaults else '='
     write_file(default_file, "{" + defaults_str + "}")
     schema_file = Path('schemas') / show_type_file(type['name'])

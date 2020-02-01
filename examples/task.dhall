@@ -1,10 +1,15 @@
 let Tekton =
-      https://raw.githubusercontent.com/TristanCacqueray/dhall-tekton/master/package.dhall sha256:95d9a132a6eff02b5a3bccdc4b4ae91bff60dca4f080a1983849689b89fbe3e3
+        env:DHALL_TEKTON
+      ? https://raw.githubusercontent.com/TristanCacqueray/dhall-tekton/master/package.dhall sha256:6e1beb1306b092073106c992df768951b4bfd62fc1299af06d6220312f2eeafe
+
+let Kubernetes =
+        env:DHALL_KUBERNETES
+      ? https://raw.githubusercontent.com/dhall-lang/dhall-kubernetes/3c6d09a9409977cdde58a091d76a6d20509ca4b0/package.dhall sha256:e9c55c7ff71f901314129e7ef100c3af5ec7a918dce25e06d83fa8c5472cb680
 
 let step-env =
-      [ Tekton.EnvVar::{
+      [ Kubernetes.EnvVar::{
         , name = "UPLOADER_USERNAME"
-        , valueFrom = Tekton.EnvVarSource::{
+        , valueFrom = Kubernetes.EnvVarSource::{
           , secretKeyRef = Some
               { name = Some "openshift-install"
               , key = "uploader-username"
@@ -12,9 +17,9 @@ let step-env =
               }
           }
         }
-      , Tekton.EnvVar::{
+      , Kubernetes.EnvVar::{
         , name = "UPLOADER_PASSWORD"
-        , valueFrom = Tekton.EnvVarSource::{
+        , valueFrom = Kubernetes.EnvVarSource::{
           , secretKeyRef = Some
               { name = Some "openshift-install"
               , key = "uploader-password"
@@ -25,7 +30,7 @@ let step-env =
       ]
 
 in  Tekton.Task::{
-    , metadata = Tekton.ObjectMeta::{
+    , metadata = Kubernetes.ObjectMeta::{
       , name = "build-tektoncd-pipeline-and-push"
       }
     , spec = Tekton.TaskSpec::{
@@ -45,42 +50,39 @@ in  Tekton.Task::{
             , env = step-env
             , image = Some "quay.io/buildah/stable:v1.11.0"
             , workingDir = Some "\$(inputs.resources.plumbing-git.path)"
-            , command =
-              [ ''
+            , script = Some
+                ''
                 #!/usr/bin/env bash
                 set -eu
                 sudo dnf -y install make
                 ...
                 ''
-              ]
             }
           , Tekton.Step::{
             , name = "generate-release-yaml"
             , env = step-env
             , image = Some "registry.access.redhat.com/ubi8/ubi:latest"
             , workingDir = Some "\$(inputs.resources.plumbing-git.path)"
-            , command =
-              [ ''
+            , script = Some
+                ''
                 #!/usr/bin/env bash
                 set -e
                 function upload() {...}
                 ...
                 ''
-              ]
             }
           , Tekton.Step::{
             , name = "install-release-yaml"
             , env = step-env
             , image = Some "quay.io/openshift/origin-cli:latest"
             , workingDir = Some "\$(inputs.resources.plumbing-git.path)"
-            , command =
-              [ ''
+            , script = Some
+                ''
                 #!/usr/bin/env bash
                 set -e
                 function upload() {...}
                 ...
                 ''
-              ]
             }
           ]
       }
